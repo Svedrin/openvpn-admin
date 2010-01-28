@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from time			import time, strftime
 from os.path			import join
 
 from OpenSSL			import crypto
@@ -147,20 +148,11 @@ class CertAuthority( models.Model ):
 		    The privkey and cert will be stored in ca_path/ca.{key,cert}.
 		"""
 		
-		privkey = PrivateKey(
-			filepath=join( ca_path, "ca.key" ),
-			owner=self.owner
-			)
-		
+		privkey = PrivateKey( filepath=join( ca_path, "ca.key" ), owner=self.owner )
 		privkey.generate()
 		privkey.save()
 		
-		cacert = Certificate(
-			privkey=privkey,
-			common_name=self.name,
-			owner=self.owner
-			)
-		
+		cacert = Certificate( privkey=privkey, common_name=self.name, owner=self.owner )
 		cacert.generate_request()
 		
 		self._sign( cacert, issuer=cacert.x509req.get_subject(), privkey=privkey.privkey )
@@ -173,13 +165,12 @@ class CertAuthority( models.Model ):
 	
 	
 	def _sign( self, certificate, issuer, privkey ):
-		""" Load the CSR from a certificate object and create a certificate signed by this CA. """
 		cert = crypto.X509()
 		cert.set_pubkey( certificate.x509req.get_pubkey() )
 		cert.set_subject( certificate.x509req.get_subject() )
 		cert.set_issuer( issuer )
-		cert.set_notBefore( "20090127185900Z" )
-		cert.set_notAfter(  "20150127185900Z" )
+		cert.set_notBefore( strftime( '%Y%m%d%H%M%SZ' ) )
+		cert.set_notAfter(  strftime( '%Y%m%d%H%M%SZ', time() + 60*60*24*365*10 ) )
 		cert.set_serial_number( self.serial )
 		cert.sign( privkey, "SHA1" )
 		
@@ -191,6 +182,8 @@ class CertAuthority( models.Model ):
 		self.save()
 	
 	def sign( self, certificate ):
+		""" Load the CSR from a certificate object and create a certificate signed by this CA. """
+		
 		return self._sign( certificate,
 			issuer=self.rootcert.x509.get_subject(),
 			privkey=self.rootcert.privkey.privkey
