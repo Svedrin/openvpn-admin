@@ -80,6 +80,7 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'pdns',
     'ca',
+    'openvpn',
 )
 
 PDNS_SERVER_FQDN = "glint.funzt-halt.net"
