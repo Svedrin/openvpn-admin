@@ -101,10 +101,14 @@ class Domain(models.Model):
 	def create_or_update_addr( self, name, address, rrtype="A" ):
 		""" Make sure `name` is the only RR in this domain that resolves to `address`. """
 		
-		self.record_set.filter( ( Q(content=address) | Q(name=name) ) & Q(rrtype=rrtype) ).delete()
+		self.delete_addr( name, address, rrtype )
 		
 		rec = self.record_set.create( name=name, rrtype=rrtype, content=address )
 		rec.save()
+	
+	def delete_addr( self, name, address, rrtype="A" ):
+		""" Delete all records of the given type with the given name or address. """
+		self.record_set.filter( ( Q(content=address) | Q(name=name) ) & Q(rrtype=rrtype) ).delete()
 	
 	
 	def save( self, *args, **kwargs ):
