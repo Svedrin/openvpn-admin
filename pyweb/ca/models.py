@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from time			import time, strftime
+from time			import time, strftime, gmtime
 from os.path			import join
 
 from OpenSSL			import crypto
@@ -18,6 +18,9 @@ class PrivateKey( models.Model ):
 	def __init__( self, *args, **kwargs ):
 		models.Model.__init__( self, *args, **kwargs )
 		self._privkey = None
+	
+	def __unicode__( self ):
+		return "%s: %s" % ( self.owner, self.filepath )
 	
 	
 	def generate( self, keytype=TYPE_RSA, bits=4096 ):
@@ -53,8 +56,8 @@ class PrivateKey( models.Model ):
 			fle.close()
 	
 	def save( self, *args, **kwargs ):
-		models.Model.save( self, *args, **kwargs )
 		self.save_keyfile()
+		models.Model.save( self, *args, **kwargs )
 
 
 
@@ -62,14 +65,17 @@ class Certificate( models.Model ):
 	privkey 	= models.ForeignKey( PrivateKey,  null=True, blank=True )
 	request 	= models.TextField(  null=True, blank=True )
 	certificate	= models.TextField(  null=True, blank=True )
-	common_name	= models.CharField(  max_length=200 )
+	common_name	= models.CharField(  max_length=200, unique=True )
 	owner		= models.ForeignKey( User )
-	signed_by	= models.ForeignKey( 'CertAuthority', null=True )
+	signed_by	= models.ForeignKey( 'CertAuthority', null=True, blank=True )
 	
 	def __init__( self, *args, **kwargs ):
 		models.Model.__init__( self, *args, **kwargs )
 		self._x509req = None
 		self._x509    = None
+	
+	def __unicode__( self ):
+		return "%s: %s" % ( self.owner, self.common_name )
 	
 	def generate_request( self ):
 		""" Generate a request from my privkey and commonName. """
@@ -142,6 +148,9 @@ class CertAuthority( models.Model ):
 	owner		= models.ForeignKey( User )
 	
 	
+	def __unicode__( self ):
+		return "%s: %s" % ( self.owner, self.name )
+	
 	def generate_root_certificate( self, ca_path ):
 		""" Generate a private key and root certificate for this CA.
 		
@@ -170,7 +179,7 @@ class CertAuthority( models.Model ):
 		cert.set_subject( certificate.x509req.get_subject() )
 		cert.set_issuer( issuer )
 		cert.set_notBefore( strftime( '%Y%m%d%H%M%SZ' ) )
-		cert.set_notAfter(  strftime( '%Y%m%d%H%M%SZ', time() + 60*60*24*365*10 ) )
+		cert.set_notAfter(  strftime( '%Y%m%d%H%M%SZ', gmtime( time() + 60*60*24*365*10 ) ) )
 		cert.set_serial_number( self.serial )
 		cert.sign( privkey, "SHA1" )
 		
