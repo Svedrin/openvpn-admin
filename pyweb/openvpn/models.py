@@ -28,7 +28,10 @@ class Node(models.Model):
 	ovpn_address	= models.CharField( 'Adresse im VPN',               max_length=15,  unique=True, blank=True )
 	ovpn_subnet	= models.CharField( 'gehosteter Adressbereich',     max_length=18,  unique=True, blank=True )
 	owner		= models.ForeignKey(   User, null=True, blank=True )
-	certificate	= models.ForeignKey( Certificate )
+	certificate	= models.ForeignKey( Certificate, null=True, blank=True )
+	inet_domain	= models.ForeignKey( Domain, null=True, blank=True, related_name="inet_node_set" )
+	ovpn_domain	= models.ForeignKey( Domain, null=True, blank=True, related_name="ovpn_node_set" )
+	rev_domain	= models.ForeignKey( Domain, null=True, blank=True, related_name="rev_node_set" )
 	
 	def __unicode__( self ):
 		if self.ovpn_subnet:
@@ -39,18 +42,21 @@ class Node(models.Model):
 	def update_dns_domains( self ):
 		""" Check the DNS records. """
 		
-		pattern = re.compile( '^(\d{1,3}\.){3}[1-9]\d{0,2}$' )
-		if pattern.match( self.inet_address ) == None:
-			rrtype = 'CNAME'
-		else:
-			rrtype = 'A'
+		if self.inet_domain:
+			pattern = re.compile( '^(\d{1,3}\.){3}[1-9]\d{0,2}$' )
+			if pattern.match( self.inet_address ) == None:
+				rrtype = 'CNAME'
+			else:
+				rrtype = 'A'
+			
+			self.inet_domain.create_or_update_addr(
+				name=("%s.%s" % self.name, self.inet_domain.name), address=self.inet_address, rrtype=rrtype
+				)
 		
-		real = Domain.objects.get(  name="nodes.geek-net.de" )
-		real.create_or_update_addr( name=("%s.nodes.geek-net.de" % self.name), address=self.inet_address, rrtype=rrtype )
-		
-		if self.ovpn_address:
-			virt = Domain.objects.get(  name="gnet" )
-			virt.create_or_update_addr( name=("%s.nodes.gnet" % self.name), address=self.ovpn_address, rrtype="A" )
+		if self.ovpn_domain and self.ovpn_address:
+			self.ovpn_domain.create_or_update_addr(
+				name=("%s.%s" % self.name, self.ovpn_domain.name), address=self.ovpn_address, rrtype="A"
+				)
 
 
 class NodeLink(models.Model):
@@ -69,6 +75,8 @@ class Client(User):
 	""" A Client connecting to one of the Nodes to get VPN access. """
 	
 	enabled 	= models.BooleanField( default=True )
+	online  	= models.BooleanField( default=False, editable=False )
+	ovpn_address	= models.IPAddressField( 'last OpenVPN IP',         editable=False, null=True, blank=True )
 	last_address	= models.IPAddressField( 'last connected IP',       editable=False, null=True, blank=True )
 	last_connect	= models.DateTimeField(  'last connect time',       editable=False, null=True, blank=True )
 	last_node	= models.ForeignKey( Node, null=True, blank=True )
