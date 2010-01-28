@@ -2,7 +2,7 @@
 
 from django.contrib	import admin
 
-from openvpn.models	import Node, NodeLink
+from openvpn.models	import Node, NodeLink, Client
 
 
 class NodeAdmin( admin.ModelAdmin ):
@@ -19,3 +19,11 @@ class NodeLinkAdmin( admin.ModelAdmin ):
 	ordering       = [ 'left' ];
 
 admin.site.register( NodeLink, NodeLinkAdmin );
+
+
+class ClientAdmin( admin.ModelAdmin ):
+	list_display   = [ 'username', 'enabled', 'online', 'ovpn_address', 'last_address', 'last_connect', 'last_node' ];
+	list_filter    = [ 'enabled' ];
+	ordering       = [ 'username' ];
+
+admin.site.register( Client, ClientAdmin );
