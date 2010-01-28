@@ -4,6 +4,7 @@ import time
 
 from django.conf		import settings
 from django.db			import models
+from django.db.models		import Q
 from django.contrib.auth.models import User
 
 from pdns.conf			import settings as pdns_settings
@@ -99,6 +100,16 @@ class Domain(models.Model):
 		
 		soa.save()
 	
+	
+	def create_or_update_addr( self, name, address, rrtype="A" ):
+		""" Make sure `name` is the only RR in this domain that resolves to `address`. """
+		
+		self.record_set.filter( ( Q(content=address) | Q(name=name) ) & Q(rrtype=rrtype) ).delete()
+		
+		rec = self.record_set.create( name=name, rrtype=rrtype, content=address )
+		rec.save()
+	
+	
 	def save( self, *args, **kwargs ):
 		""" Save the Domain, automatically creating a SOA record for new domains. """
 		makeSoa = ( self.id is None )
@@ -169,3 +180,5 @@ class Record(models.Model):
 		self.change_date = time.time()
 		
 		models.Model.save( self, *args, **kwargs )
+
+
