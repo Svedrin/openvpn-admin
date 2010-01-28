@@ -25,9 +25,6 @@ class Supermaster(models.Model):
 	def __unicode__(self):
 		return self.nameserver
 	
-	def __str__(self):
-		return unicode(self)
-	
 	class Meta:
 		db_table = 'supermasters'
 
@@ -46,11 +43,11 @@ class Domain(models.Model):
 		)
 	
 	name		= models.CharField(     'Name der Domain', max_length=255, unique=True )
-	master		= models.CharField(     'Masterserver bei Slaves', max_length=20, null=True, blank=True )
-	last_check	= models.DateTimeField( 'Datum der letzten Prüfung auf Änderungen', null=True, editable=False )
+	master		= models.CharField(     'Masterserver bei Slaves', max_length=20, blank=True )
+	last_check	= models.DateTimeField( 'Datum der letzten Prüfung auf Änderungen', null=True, blank=True, editable=False )
 	dtype		= models.CharField(     'Typ', db_column="type", max_length=6, choices=TYPE_CHOICES,
 						default=pdns_settings.DEFAULT_DOMAIN_TYPE )
-	notified_serial = models.IntegerField(  'Letzte im SOA benutzte Serial', null=True, editable=False )
+	notified_serial = models.IntegerField(  'Letzte im SOA benutzte Serial', null=True, blank=True, editable=False )
 	account 	= models.ForeignKey(    Supermaster, db_column="account", null=True, blank=True, to_field="account" )
 	owner		= models.ForeignKey(    User, null=True, blank=True )
 	
@@ -149,9 +146,6 @@ class Record(models.Model):
 	
 	def __unicode__(self):
 		return "%s (%s: %s)" % ( self.name, self.rrtype, self.content )
-	
-	def __str__(self):
-		return unicode(self)
 	
 	class Meta:
 		db_table = 'records'
