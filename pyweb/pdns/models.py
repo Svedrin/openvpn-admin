@@ -162,7 +162,7 @@ class Record(models.Model):
 			domlen = len( self.domain.name )
 			return self.name[:-(domlen+1)]
 	
-	relname = property( get_relative_name, doc=get_relative_name.__doc__ )
+	relname = property( get_relative_name )
 	
 	def save( self, *args, **kwargs ):
 		""" Save the record, making sure the name field contains an FQDN. This will also
