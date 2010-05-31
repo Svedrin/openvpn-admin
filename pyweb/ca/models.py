@@ -36,7 +36,7 @@ class PrivateKey( models.Model ):
 				self.load_keyfile()
 		return self._privkey
 	
-	privkey = property( get_privkey, doc=get_privkey.__doc__ )
+	privkey = property( get_privkey )
 	
 	
 	def load_keyfile( self ):
@@ -104,7 +104,7 @@ class Certificate( models.Model ):
 		
 		return self._x509req
 	
-	x509req = property( get_x509_request, doc=get_x509_request.__doc__ )
+	x509req = property( get_x509_request )
 	
 	
 	
@@ -129,7 +129,7 @@ class Certificate( models.Model ):
 			self._x509 = cert
 			self.save()
 	
-	x509    = property( get_x509_certificate, set_x509_certificate, doc=get_x509_certificate.__doc__ )
+	x509    = property( get_x509_certificate, set_x509_certificate )
 	
 	
 	def save_to_file( self, filepath ):
