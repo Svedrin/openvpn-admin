@@ -30,7 +30,7 @@ from openvpn.models		import Node, Client
 from ca.models			import Certificate
 
 
-def hook_client_connect( my_address, common_name, inet_address, ovpn_address, config_file ):
+def hook_client_connect( my_address, common_name, inet_address, ovpn_address ):
 	try:
 		node   = Node.objects.get( ovpn_address=my_address )
 	except Node.DoesNotExist:
@@ -69,7 +69,7 @@ def hook_client_connect( my_address, common_name, inet_address, ovpn_address, co
 	return 0
 
 
-def hook_client_disconnect( my_address, common_name, inet_address, ovpn_address, config_file ):
+def hook_client_disconnect( my_address, common_name, inet_address, ovpn_address ):
 	try:
 		node   = Node.objects.get( ovpn_address=my_address )
 	except Node.DoesNotExist:
@@ -110,7 +110,6 @@ if __name__ == '__main__':
 		common_name  = os.environ['common_name'],
 		inet_address = os.environ['trusted_ip'],
 		ovpn_address = os.environ['ifconfig_pool_remote_ip'],
-		config_file  = sys.argv[1],
 	)
 	
 	sys.exit( stat )
